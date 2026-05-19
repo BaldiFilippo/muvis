@@ -31,6 +31,8 @@ export default function SearchPage() {
   const [errore, setErrore] = useState("")
   const [termineCorrente, setTermineCorrente] = useState("love")
   const [queryAttiva, setQueryAttiva] = useState("") // ultima ricerca effettuata
+  const [filtroTipo, setFiltroTipo] = useState<"" | "movie" | "series">("")
+  const [filtroDecennio, setFiltroDecennio] = useState<string>("")
   const { mostraToast } = useToast()
 
   // Controlla se l'utente è loggato
@@ -45,6 +47,16 @@ export default function SearchPage() {
     caricaFilmCasuali()
   }, [])
 
+  // Filtra i risultati per decennio lato client
+  function applicaFiltroDecennio(lista: OmdbMovie[], decennio: string): OmdbMovie[] {
+    if (!decennio) return lista
+    const inizio = parseInt(decennio)
+    return lista.filter((f) => {
+      const anno = parseInt(f.Year)
+      return anno >= inizio && anno < inizio + 10
+    })
+  }
+
   // Carica film con un termine casuale e svuota la ricerca
   async function caricaFilmCasuali() {
     setQuery("")
@@ -53,8 +65,9 @@ export default function SearchPage() {
     setErrore("")
     const termineNuovo = TERMINI_CASUALI[Math.floor(Math.random() * TERMINI_CASUALI.length)]
     setTermineCorrente(termineNuovo)
-    const risultati = await searchMovies(termineNuovo)
-    setFilms(risultati.slice(0, 10))
+    const risultati = await searchMovies(termineNuovo, filtroTipo || undefined)
+    const filtrati = applicaFiltroDecennio(risultati, filtroDecennio)
+    setFilms(filtrati.slice(0, 10))
     setCaricamento(false)
   }
 
@@ -66,10 +79,37 @@ export default function SearchPage() {
     if (!queryNormalizzata) return
     setCaricamento(true)
     setErrore("")
-    const risultati = await searchMovies(queryNormalizzata)
-    if (risultati.length === 0) setErrore("Nessun film trovato")
-    setFilms(risultati.slice(0, 10))
+    const risultati = await searchMovies(queryNormalizzata, filtroTipo || undefined)
+    const filtrati = applicaFiltroDecennio(risultati, filtroDecennio)
+    if (filtrati.length === 0) setErrore("Nessun film trovato")
+    setFilms(filtrati.slice(0, 10))
     setQueryAttiva(queryNormalizzata)
+    setCaricamento(false)
+  }
+
+  // Cambia il filtro tipo e rilancia la ricerca corrente
+  async function cambiaTipo(nuovoTipo: "" | "movie" | "series") {
+    setFiltroTipo(nuovoTipo)
+    setCaricamento(true)
+    setErrore("")
+    const termine = queryAttiva || termineCorrente
+    const risultati = await searchMovies(termine, nuovoTipo || undefined)
+    const filtrati = applicaFiltroDecennio(risultati, filtroDecennio)
+    if (filtrati.length === 0) setErrore("Nessun film trovato")
+    setFilms(filtrati.slice(0, 10))
+    setCaricamento(false)
+  }
+
+  // Cambia il filtro decennio e rilancia la ricerca corrente
+  async function cambiaDecennio(nuovoDecennio: string) {
+    setFiltroDecennio(nuovoDecennio)
+    setCaricamento(true)
+    setErrore("")
+    const termine = queryAttiva || termineCorrente
+    const risultati = await searchMovies(termine, filtroTipo || undefined)
+    const filtrati = applicaFiltroDecennio(risultati, nuovoDecennio)
+    if (filtrati.length === 0) setErrore("Nessun film trovato")
+    setFilms(filtrati.slice(0, 10))
     setCaricamento(false)
   }
 
@@ -133,13 +173,57 @@ export default function SearchPage() {
           {/* Pulsante random — sempre visibile */}
           <button
             type="button"
-            onClick={caricaFilmCasuali}
+            onClick={() => caricaFilmCasuali()}
             title="Film casuali"
             className="px-3 py-2 bg-secondary border border-border rounded hover:opacity-90"
           >
             <Shuffle size={18} />
           </button>
         </form>
+
+        {/* Chip filtri */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          {/* Tipo */}
+          {(["", "movie", "series"] as const).map((tipo) => {
+            const label = tipo === "" ? "Tutti" : tipo === "movie" ? "Film" : "Serie TV"
+            const attivo = filtroTipo === tipo
+            return (
+              <button
+                key={tipo}
+                type="button"
+                onClick={() => cambiaTipo(tipo)}
+                className={`px-3 py-1 rounded-full text-xs border transition-colors ${
+                  attivo
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-transparent text-muted-foreground border-border hover:border-foreground hover:text-foreground"
+                }`}
+              >
+                {label}
+              </button>
+            )
+          })}
+
+          <div className="w-px bg-border mx-1" />
+
+          {/* Decennio */}
+          {[["", "Qualsiasi anno"], ["2020", "2020s"], ["2010", "2010s"], ["2000", "2000s"], ["1990", "anni '90"], ["1980", "anni '80"]].map(([valore, label]) => {
+            const attivo = filtroDecennio === valore
+            return (
+              <button
+                key={valore}
+                type="button"
+                onClick={() => cambiaDecennio(valore)}
+                className={`px-3 py-1 rounded-full text-xs border transition-colors ${
+                  attivo
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-transparent text-muted-foreground border-border hover:border-foreground hover:text-foreground"
+                }`}
+              >
+                {label}
+              </button>
+            )
+          })}
+        </div>
 
         {/* Messaggio di errore */}
         {errore && <p className="text-red-400 mb-4">{errore}</p>}
