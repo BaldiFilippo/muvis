@@ -1,0 +1,29 @@
+// Pagina radice: reindirizza a /search se loggato, altrimenti a /login
+import { redirect } from "next/navigation"
+import { createServerClient } from "@supabase/ssr"
+import { cookies } from "next/headers"
+
+export default async function HomePage() {
+  const cookieStore = cookies()
+
+  // Crea il client Supabase lato server
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value
+        },
+      },
+    }
+  )
+
+  const { data: { session } } = await supabase.auth.getSession()
+
+  if (session) {
+    redirect("/search")
+  } else {
+    redirect("/login")
+  }
+}
