@@ -19,6 +19,69 @@ App per tenere traccia dei film e delle serie TV che hai visto o che vuoi vedere
 - [Sonner](https://sonner.emilkowal.ski/) — notifiche toast
 - [Lucide React](https://lucide.dev/) — icone
 
+## OMDB API
+
+Tutta la logica di comunicazione con OMDB è centralizzata in [`lib/omdb.ts`](lib/omdb.ts).
+
+### Base URL
+
+```
+https://www.omdbapi.com/?apikey=<chiave>
+```
+
+### Endpoint utilizzati
+
+#### Ricerca per titolo — `?s=`
+
+```
+GET /?apikey=...&s=batman&type=movie
+```
+
+| Parametro | Descrizione |
+|---|---|
+| `s` | Testo da cercare nel titolo |
+| `type` | Opzionale: `movie` o `series` |
+
+Risposta: array di risultati in `data.Search`, ognuno con `imdbID`, `Title`, `Year`, `Poster`.
+
+#### Dettagli singolo film — `?i=`
+
+```
+GET /?apikey=...&i=tt1285016&plot=short
+```
+
+| Parametro | Descrizione |
+|---|---|
+| `i` | ID IMDB del film (es. `tt1285016`) |
+| `plot` | `short` per la trama breve |
+
+Risposta: oggetto completo con `Title`, `Year`, `Poster`, `Plot`, `Genre`, `Director`, `Actors`, `Runtime`, `imdbRating`, `Rated`.
+
+### Tipi TypeScript
+
+```ts
+// Risultato di ricerca (lista)
+type OmdbMovie = {
+  imdbID: string
+  Title: string
+  Year: string
+  Poster: string
+}
+
+// Dettaglio singolo film
+type OmdbMovieDetail = OmdbMovie & {
+  Plot: string
+  Genre: string
+  Director: string
+  Actors: string
+  Runtime: string
+  imdbRating: string
+  Rated: string
+}
+```
+
+> **Limite:** il piano gratuito di OMDB consente 1.000 richieste al giorno.
+
 ## Setup
 
 1. Clona il repository e installa le dipendenze:
