@@ -6,14 +6,9 @@ import Image from "next/image"
 import { createClient } from "@/lib/supabase"
 import { searchMovies, getMovieDetails, type OmdbMovie, type OmdbMovieDetail } from "@/lib/omdb"
 import Navbar from "@/components/Navbar"
-import { useToast } from "@/components/ui/toast"
-import { Shuffle } from "lucide-react"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { toast } from "sonner"
+import { Shuffle, Bookmark, Eye } from "lucide-react"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
 
 // Termini casuali usati quando non si sta cercando nulla
 const TERMINI_CASUALI = ["love", "war", "night", "city", "man", "time", "life", "dark"]
@@ -33,7 +28,6 @@ export default function SearchPage() {
   const [queryAttiva, setQueryAttiva] = useState("") // ultima ricerca effettuata
   const [filtroTipo, setFiltroTipo] = useState<"" | "movie" | "series">("")
   const [filtroDecennio, setFiltroDecennio] = useState<string>("")
-  const { mostraToast } = useToast()
 
   // Controlla se l'utente è loggato
   useEffect(() => {
@@ -139,10 +133,10 @@ export default function SearchPage() {
 
     if (error) {
       console.error(error)
-      mostraToast("Errore durante il salvataggio", "errore")
+      toast.error("Errore durante il salvataggio")
     } else {
       setDialogAperto(false)
-      mostraToast(
+      toast.success(
         status === "watchlist"
           ? `"${filmSelezionato.Title}" aggiunto alla Watchlist`
           : `"${filmSelezionato.Title}" segnato come Visto`
@@ -155,6 +149,7 @@ export default function SearchPage() {
       <Navbar />
 
       <div className="max-w-5xl mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold mb-6">Cerca</h1>
         {/* Barra di ricerca */}
         <form onSubmit={cercaFilm} className="flex gap-3 mb-8">
           <input
@@ -181,48 +176,49 @@ export default function SearchPage() {
           </button>
         </form>
 
-        {/* Chip filtri */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          {/* Tipo */}
-          {(["", "movie", "series"] as const).map((tipo) => {
-            const label = tipo === "" ? "Tutti" : tipo === "movie" ? "Film" : "Serie TV"
-            const attivo = filtroTipo === tipo
-            return (
-              <button
-                key={tipo}
-                type="button"
-                onClick={() => cambiaTipo(tipo)}
-                className={`px-3 py-1 rounded-full text-xs border transition-colors ${
-                  attivo
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-transparent text-muted-foreground border-border hover:border-foreground hover:text-foreground"
-                }`}
-              >
-                {label}
-              </button>
-            )
-          })}
-
-          <div className="w-px bg-border mx-1" />
-
-          {/* Decennio */}
-          {[["", "Qualsiasi anno"], ["2020", "2020s"], ["2010", "2010s"], ["2000", "2000s"], ["1990", "anni '90"], ["1980", "anni '80"]].map(([valore, label]) => {
-            const attivo = filtroDecennio === valore
-            return (
-              <button
-                key={valore}
-                type="button"
-                onClick={() => cambiaDecennio(valore)}
-                className={`px-3 py-1 rounded-full text-xs border transition-colors ${
-                  attivo
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-transparent text-muted-foreground border-border hover:border-foreground hover:text-foreground"
-                }`}
-              >
-                {label}
-              </button>
-            )
-          })}
+        {/* Chip filtri — due righe: tipo e decennio */}
+        <div className="flex flex-col gap-2 mb-6">
+          {/* Riga tipo */}
+          <div className="flex flex-wrap gap-2">
+            {(["", "movie", "series"] as const).map((tipo) => {
+              const label = tipo === "" ? "Tutti" : tipo === "movie" ? "Film" : "Serie TV"
+              const attivo = filtroTipo === tipo
+              return (
+                <button
+                  key={tipo}
+                  type="button"
+                  onClick={() => cambiaTipo(tipo)}
+                  className={`px-3 py-1 rounded-full text-xs border transition-colors whitespace-nowrap ${
+                    attivo
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-transparent text-muted-foreground border-border hover:border-foreground hover:text-foreground"
+                  }`}
+                >
+                  {label}
+                </button>
+              )
+            })}
+          </div>
+          {/* Riga decennio */}
+          <div className="flex flex-wrap gap-2">
+            {[["", "Qualsiasi anno"], ["2020", "2020s"], ["2010", "2010s"], ["2000", "2000s"], ["1990", "anni '90"], ["1980", "anni '80"]].map(([valore, label]) => {
+              const attivo = filtroDecennio === valore
+              return (
+                <button
+                  key={valore}
+                  type="button"
+                  onClick={() => cambiaDecennio(valore)}
+                  className={`px-3 py-1 rounded-full text-xs border transition-colors whitespace-nowrap ${
+                    attivo
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-transparent text-muted-foreground border-border hover:border-foreground hover:text-foreground"
+                  }`}
+                >
+                  {label}
+                </button>
+              )
+            })}
+          </div>
         </div>
 
         {/* Messaggio di errore */}
@@ -241,7 +237,7 @@ export default function SearchPage() {
 
         {/* Griglia dei film */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {films.map((film) => (
+          {films.map((film, index) => (
             <div
               key={film.imdbID}
               onClick={() => apriDialog(film)}
@@ -253,6 +249,8 @@ export default function SearchPage() {
                     src={film.Poster}
                     alt={film.Title}
                     fill
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                    priority={index < 2}
                     className="object-cover group-hover:opacity-80 transition-opacity"
                   />
                 ) : (
@@ -277,25 +275,23 @@ export default function SearchPage() {
 
           {filmSelezionato && (
             <>
-              <DialogHeader>
-                <DialogTitle className="text-xl">{filmSelezionato.Title}</DialogTitle>
-              </DialogHeader>
-
-              <div className="flex gap-5 pt-2">
+              <div className="flex gap-4">
                 {/* Locandina */}
                 {filmSelezionato.Poster && filmSelezionato.Poster !== "N/A" && (
-                  <div className="w-28 h-40 relative rounded overflow-hidden flex-shrink-0">
+                  <div className="w-24 flex-shrink-0 relative">
                     <Image
                       src={filmSelezionato.Poster}
                       alt={filmSelezionato.Title}
-                      fill
-                      className="object-cover"
+                      width={96}
+                      height={144}
+                      className="rounded object-contain w-full h-auto"
                     />
                   </div>
                 )}
 
-                {/* Dettagli */}
+                {/* Titolo + dettagli */}
                 <div className="flex flex-col gap-1.5 text-sm min-w-0">
+                  <h2 className="text-lg font-bold leading-tight mb-1">{filmSelezionato.Title}</h2>
                   <div className="flex flex-wrap gap-2 mb-1">
                     {filmSelezionato.Year !== "N/A" && (
                       <span className="px-2 py-0.5 bg-white/10 rounded text-xs">{filmSelezionato.Year}</span>
@@ -330,15 +326,15 @@ export default function SearchPage() {
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => aggiungiFilm("watchlist")}
-                  className="flex-1 py-2 bg-secondary border border-border rounded hover:opacity-90 text-sm"
+                  className="flex-1 py-2 bg-secondary border border-border rounded hover:opacity-90 text-sm flex items-center justify-center gap-2"
                 >
-                  + Watchlist
+                  <Bookmark size={14} /> Watchlist
                 </button>
                 <button
                   onClick={() => aggiungiFilm("watched")}
-                  className="flex-1 py-2 bg-primary text-primary-foreground rounded hover:opacity-90 text-sm"
+                  className="flex-1 py-2 bg-primary text-primary-foreground rounded hover:opacity-90 text-sm flex items-center justify-center gap-2"
                 >
-                  ✓ Visto
+                  <Eye size={14} /> Visto
                 </button>
               </div>
             </>

@@ -6,8 +6,8 @@ import Image from "next/image"
 import { createClient } from "@/lib/supabase"
 import { getMovieDetails, type OmdbMovieDetail } from "@/lib/omdb"
 import Navbar from "@/components/Navbar"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { useToast } from "@/components/ui/toast"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { toast } from "sonner"
 
 // Tipo che rappresenta un record nel database
 type FilmSalvato = {
@@ -24,7 +24,6 @@ export default function WatchlistPage() {
 
   const [films, setFilms] = useState<FilmSalvato[]>([])
   const [caricamento, setCaricamento] = useState(true)
-  const { mostraToast } = useToast()
   const [filmSelezionato, setFilmSelezionato] = useState<FilmSalvato | null>(null)
   const [dettagli, setDettagli] = useState<OmdbMovieDetail | null>(null)
   const [caricamentoDettagli, setCaricamentoDettagli] = useState(false)
@@ -74,11 +73,11 @@ export default function WatchlistPage() {
     const { error } = await supabase.from("user_movies").update({ status: "watched" }).eq("id", id)
     if (error) {
       console.error(error)
-      mostraToast("Errore durante l'aggiornamento", "errore")
+      toast.error("Errore durante l'aggiornamento")
     } else {
       setFilms(films.filter((f) => f.id !== id))
       setDialogAperto(false)
-      mostraToast("Film segnato come visto!")
+      toast.success("Film segnato come visto!")
     }
   }
 
@@ -109,7 +108,7 @@ export default function WatchlistPage() {
 
         {/* Griglia dei film in watchlist */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {films.map((film) => (
+          {films.map((film, index) => (
             <div
               key={film.id}
               onClick={() => apriDettagli(film)}
@@ -121,6 +120,8 @@ export default function WatchlistPage() {
                     src={film.poster}
                     alt={film.title}
                     fill
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                    priority={index < 2}
                     className="object-cover group-hover:opacity-80 transition-opacity"
                   />
                 ) : (
@@ -144,18 +145,15 @@ export default function WatchlistPage() {
 
           {dettagli && (
             <>
-              <DialogHeader>
-                <DialogTitle className="text-xl">{dettagli.Title}</DialogTitle>
-              </DialogHeader>
-
-              <div className="flex gap-5 pt-2">
+              <div className="flex gap-4">
                 {dettagli.Poster && dettagli.Poster !== "N/A" && (
-                  <div className="w-28 h-40 relative rounded overflow-hidden flex-shrink-0">
-                    <Image src={dettagli.Poster} alt={dettagli.Title} fill className="object-cover" />
+                  <div className="w-24 flex-shrink-0">
+                    <Image src={dettagli.Poster} alt={dettagli.Title} width={96} height={144} className="rounded object-contain w-full h-auto" />
                   </div>
                 )}
 
                 <div className="flex flex-col gap-1.5 text-sm min-w-0">
+                  <h2 className="text-lg font-bold leading-tight mb-1">{dettagli.Title}</h2>
                   <div className="flex flex-wrap gap-2 mb-1">
                     {dettagli.Year !== "N/A" && (
                       <span className="px-2 py-0.5 bg-white/10 rounded text-xs">{dettagli.Year}</span>
