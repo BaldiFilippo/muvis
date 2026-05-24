@@ -15,8 +15,7 @@ App per tenere traccia dei film e delle serie TV che hai visto o che vuoi vedere
 - [Supabase](https://supabase.com/) — autenticazione e database
 - [OMDB API](https://www.omdbapi.com/) — dati su film e serie
 - [Tailwind CSS](https://tailwindcss.com/) — stile
-- [Recharts](https://recharts.org/) — grafici nella pagina statistiche
-- [Sonner](https://sonner.emilkowal.ski/) — notifiche toast
+- [shadcn/ui](https://ui.shadcn.com/) — componenti UI, include [Recharts](https://recharts.org/) (grafici nella pagina statistiche) e [Sonner](https://sonner.emilkowal.ski/) (notifiche toast)
 - [Lucide React](https://lucide.dev/) — icone
 
 ## OMDB API
