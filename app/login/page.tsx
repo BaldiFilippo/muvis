@@ -40,7 +40,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-sm p-8 bg-card border border-border rounded-lg">
-        <h1 className="text-2xl font-bold text-center mb-6">🎬 Muvis</h1>
+        <h1 className="text-2xl font-bold text-center mb-6">Muvis</h1>
 
         {/* Campo email */}
         <div className="mb-4">

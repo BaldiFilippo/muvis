@@ -1,4 +1,5 @@
 // Layout principale dell'app — avvolge tutte le pagine
+// children è la pagina che verrà renderizzata all'interno del layout determinata in base all'URL corrente
 import type { Metadata } from "next"
 import { Poppins } from "next/font/google"
 import { Toaster } from "sonner"

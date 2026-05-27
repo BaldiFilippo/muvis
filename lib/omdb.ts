@@ -22,6 +22,7 @@ export type OmdbMovieDetail = OmdbMovie & {
 }
 
 // Cerca film per titolo, con filtro opzionale per tipo
+// query è il titolo del film da cercare
 export async function searchMovies(query: string, type?: "movie" | "series"): Promise<OmdbMovie[]> {
   const typeParam = type ? `&type=${type}` : ""
   const res = await fetch(`${BASE_URL}/?apikey=${API_KEY}&s=${encodeURIComponent(query)}${typeParam}`)
